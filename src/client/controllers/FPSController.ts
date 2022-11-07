@@ -1,11 +1,13 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Workspace as World } from "@rbxts/services";
+import { CrosshairController } from "./CrosshairController";
 import { ProceduralAnimController } from "./ProceduralAnimController";
 import { RecoilController } from "./RecoilController";
 
 @Controller({})
 export class FPSController implements OnStart {
     public constructor(
+        private crosshair: CrosshairController,
         private recoil: RecoilController,
         private proceduralAnims: ProceduralAnimController
     ) {}

@@ -15,7 +15,7 @@ export class RecoilController implements OnRender {
         kickDamper: 1,
     };
 
-	public onRender(dt: number) {
+	public onRender(dt: number): void {
         const of = this.mainSpring.update(dt).div(80).mul(dt).mul(60);
         const tf = this.torqueSpring.update(dt).div(80).mul(dt).mul(60);
         const offset = new CFrame(0, 0, of.Z * 2.5);
