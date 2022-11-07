@@ -1,5 +1,5 @@
 {
-	"name": "flamework-game",
+	"name": "firestorm-fps",
 	"globIgnorePaths": [
 		"**/package.json",
 		"**/tsconfig.json"
