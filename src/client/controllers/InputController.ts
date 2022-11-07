@@ -1,5 +1,5 @@
 import { Controller, OnStart } from "@flamework/core";
-import { Players, Workspace as World } from "@rbxts/services";
+import { Players } from "@rbxts/services";
 import { FPSController } from "./FPSController";
 
 @Controller({})

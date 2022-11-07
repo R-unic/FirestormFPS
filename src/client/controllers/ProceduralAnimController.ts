@@ -1,13 +1,14 @@
 import { Controller, OnRender, OnStart } from "@flamework/core";
 import { Players } from "@rbxts/services";
 import { WaitFor } from "shared/modules/utility/WaitFor";
+import ViewModel from "client/classes/ViewModel";
 import Spring from "shared/modules/utility/Spring";
 import Wave from "shared/modules/utility/Wave";
 
 @Controller({})
 export class ProceduralAnimController implements OnStart, OnRender {
     private char?: Model;
-	private readonly attached: (Camera | BasePart)[] = [];
+	private readonly attached: (Camera | ViewModel)[] = [];
     private readonly waves = {
         walkCycleWeak: new Wave(5, 10),
         walkCycleStrong: new Wave(7, 10),
@@ -30,15 +31,23 @@ export class ProceduralAnimController implements OnStart, OnRender {
         this.springs.walkCycle.shove(movementForce.div(5000).mul(dt).mul(60).mul(walkVelocity.Magnitude));
 
         const walkCycle = this.springs.walkCycle.update(dt);
-        for (const obj of this.attached)
-            obj.CFrame = obj.CFrame.mul(new CFrame(walkCycle.X / 2, walkCycle.Y / 2, 0)).mul(CFrame.Angles(walkCycle.Y / 2, walkCycle.Y / 4, walkCycle.X));
+        const walkCF = new CFrame(walkCycle.X / 2, walkCycle.Y / 2, 0).mul(CFrame.Angles(walkCycle.Y / 2, walkCycle.Y / 4, walkCycle.X));
+        for (let obj of this.attached)
+            if (obj)
+                if (typeOf(obj) === "Instance") {
+                    obj = <Camera>obj;
+                    obj.CFrame = obj.CFrame.mul(walkCF);
+                } else {
+                    obj = <ViewModel>obj;
+                    obj.setWalkCycleCFrame(walkCF);
+                }
     }
 
-    public attach(instance: Camera | BasePart): void {
+    public attach(instance: Camera | ViewModel): void {
         this.attached.push(instance);
     }
 
-    public detach(instance: Camera | BasePart): void {
-        this.attached.remove(this.attached.indexOf(instance));
+    public destroy(): void {
+        this.attached.clear();
     }
 }
