@@ -34,7 +34,11 @@ export default class ViewModel {
 
     public setEquipped(model: Model): void {
         this.weapon = model;
-        this.data = <WeaponData>require(WaitFor<ModuleScript>(this.weapon, "Data"));
+        try {
+            this.data = <WeaponData>require(WaitFor<ModuleScript>(this.weapon, "Data"));
+        } catch(e) {
+            warn(`Weapon data for "${this.weapon.Name}" failed to load. Stack trace:\n${e}`);
+        }
     }
 
     public playAnimation(name: string): void {

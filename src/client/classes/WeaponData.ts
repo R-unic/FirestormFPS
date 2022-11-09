@@ -8,4 +8,7 @@ export interface WeaponData {
         camera: RecoilPattern;
         model: RecoilPattern;
     };
+
+    shell: string;
+    shellOffset: CFrame;
 }

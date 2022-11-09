@@ -1,16 +1,16 @@
 import { Controller, OnRender } from "@flamework/core";
 import ViewModel from "client/classes/ViewModel";
 import Spring from "shared/modules/utility/Spring";
+import { ProceduralAnimController } from "./ProceduralAnimController";
 
 @Controller({})
 export class RecoilController implements OnRender {
-    private torqueDir = 1;
 	private readonly attached: (Camera | ViewModel)[] = [];
     private readonly springDefaults = {
         camera: [25, 75, 4, 5.5],
         cameraTorque: [50, 110, 4, 15],
-        model: [35, 65, 4, 5.5],
-        modelTorque: [45, 120, 4, 16]
+        model: [35, 75, 4, 5.5],
+        modelTorque: [45, 110, 4, 14]
     };
     private readonly springs = {
         camera: new Spring(...this.springDefaults.camera),
@@ -36,14 +36,14 @@ export class RecoilController implements OnRender {
         const tcf = this.springs.cameraTorque.update(dt).div(springDamp);
         const coffset = new CFrame(0, 0, ocf.Z * 2.5);
         const cvertClimb = CFrame.Angles(ocf.X, 0, 0);
-        const ctorque = CFrame.Angles(0, tcf.Y * this.torqueDir, tcf.Y * torqueMult * this.torqueDir)
+        const ctorque = CFrame.Angles(0, tcf.Y, tcf.Y * torqueMult)
         const crecoil = coffset.mul(cvertClimb).mul(ctorque);
 
         const omf = this.springs.model.update(dt).div(springDamp);
         const tmf = this.springs.modelTorque.update(dt).div(springDamp);
         const moffset = new CFrame(0, 0, omf.Z);
         const mvertClimb = CFrame.Angles(omf.X, 0, 0);
-        const mtorque = CFrame.Angles(0, tmf.Y  * this.torqueDir, tmf.Y * torqueMult * this.torqueDir)
+        const mtorque = CFrame.Angles(0, tmf.Y, tmf.Y * torqueMult)
         const mrecoil = moffset.mul(mvertClimb).mul(mtorque);
         
         for (let obj of this.attached)
@@ -55,10 +55,6 @@ export class RecoilController implements OnRender {
                     obj = <ViewModel>obj;
                     obj.setCFrame(obj.getCFrame().mul(mrecoil));
                 }
-    }
-
-    public randomizeTorqueDirection(): void {
-        this.torqueDir = (new Random).NextInteger(1, 2) === 1 ? 1 : -1;
     }
 
     public kick(force: Vector3, recoilType: "Camera" | "Model"): void {
