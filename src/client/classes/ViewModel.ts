@@ -41,7 +41,7 @@ export default class ViewModel {
         }
     }
 
-    public playAnimation(name: string): void {
+    public playAnimation(name: string, playImmediately = true): AnimationTrack | undefined {
         if (!this.weapon || !this.data) return;
 
         const anims = this.weapon.WaitForChild("Animations");
@@ -50,7 +50,10 @@ export default class ViewModel {
         const track = controller.LoadAnimation(anim);
 
         track.Stopped.Once(() => track.Destroy());
-        track.Play();
+        if (playImmediately)
+            track.Play();
+            
+        return track;
     }
 
     public destroy(): void {

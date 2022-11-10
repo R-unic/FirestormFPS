@@ -9,8 +9,8 @@ export class RecoilController implements OnRender {
     private readonly springDefaults = {
         camera: [25, 75, 4, 5.5],
         cameraTorque: [50, 110, 4, 15],
-        model: [35, 75, 4, 5.5],
-        modelTorque: [45, 110, 4, 14]
+        model: [25, 75, 4, 5.5],
+        modelTorque: [40, 110, 4, 4]
     };
     private readonly springs = {
         camera: new Spring(...this.springDefaults.camera),

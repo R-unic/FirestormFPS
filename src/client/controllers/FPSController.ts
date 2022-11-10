@@ -7,6 +7,7 @@ import { Janitor } from "@rbxts/janitor";
 import { WaitFor } from "shared/modules/utility/WaitFor";
 import { WeaponData } from "client/classes/WeaponData";
 import ViewModel from "client/classes/ViewModel";
+import { SoundController } from "./SoundController";
 
 interface WeaponModel extends Model {
     Trigger: Part & {
@@ -25,11 +26,13 @@ export class FPSController implements OnStart, OnRender {
     private readonly janitor = new Janitor;
     private viewModel: ViewModel;
     private weaponData?: WeaponData;
-    private weaponModel?: Model;
+    private weaponModel?: WeaponModel;
+    private idleTrack?: AnimationTrack;
     private chamberCF = new CFrame;
 
     public constructor(
         private crosshair: CrosshairController,
+        private sounds: SoundController,
         private recoil: RecoilController,
         private proceduralAnims: ProceduralAnimController
     ) {
@@ -69,7 +72,7 @@ export class FPSController implements OnStart, OnRender {
        this.weaponModel = model;
     }
 
-    private createShootVFX(): void {
+    private createEjectedShell(): void {
         if (!this.weaponModel || !this.weaponData) return;
 
         const vfx = Replicated.WaitForChild("VFX");
@@ -77,15 +80,20 @@ export class FPSController implements OnStart, OnRender {
         shell.CFrame = this.chamberCF;
         shell.Parent = World.Debris;
 
-        const trigger = <Part>this.weaponModel.WaitForChild("Trigger");
+        const trigger = this.weaponModel.Trigger;
         const ejectForce = trigger.CFrame.RightVector.Unit.div(10).add(new Vector3(0, .1, 0));
-        const ejectTorque = trigger.CFrame.LookVector.Unit.div(math.random(7, 16)).mul((new Random).NextInteger(1, 2) === 1 ? 1 : -1);
+        const ejectTorque = trigger.CFrame.LookVector.Unit.div(math.random(2, 16)).mul((new Random).NextInteger(1, 2) === 1 ? 1 : -1);
         shell.ApplyImpulseAtPosition(ejectForce, shell.CFrame.Position.add(ejectTorque));
         Debris.AddItem(shell, 5);
+    }
 
+    private createShootVFX(): void {
+        if (!this.weaponModel || !this.weaponData) return;
+
+        const vfx = Replicated.WaitForChild("VFX");
         const muzzleFlash = WaitFor<Folder>(vfx, "MuzzleFlash").Clone();
         for (const v of <(ParticleEmitter | Light)[]>muzzleFlash.GetChildren()) {
-            v.Parent = this.weaponModel.WaitForChild("Flame");
+            v.Parent = this.weaponModel.Flame;
             v.Enabled = true;
             task.delay(v.Name === "Smoke" ? .15 : .1, () => {
                 v.Enabled = false
@@ -93,7 +101,7 @@ export class FPSController implements OnStart, OnRender {
             });
         }
 
-        const chamberSmoke = WaitFor<ParticleEmitter>(WaitFor<Part>(this.weaponModel, "Chamber"), "Smoke");
+        const chamberSmoke = WaitFor<ParticleEmitter>(this.weaponModel.Chamber, "Smoke");
         chamberSmoke.Enabled = true;
         task.delay(.18, () => {
             chamberSmoke.Enabled = false
@@ -101,9 +109,14 @@ export class FPSController implements OnStart, OnRender {
     }
     
     public shoot(): void {
-        if (!this.viewModel || !this.weaponData) return
+        if (!this.viewModel || !this.weaponModel || !this.weaponData) return;
 
         this.createShootVFX();
+        this.sounds.clone(<Sound>this.weaponModel.Flame.WaitForChild("Fire"));
+        
+        const slideAnim = this.viewModel.playAnimation("Slide", false)!
+        slideAnim.GetMarkerReachedSignal("SlideBack").Once(() => this.createEjectedShell());
+        slideAnim.Play();
 
         const r = new Random;
         const torqueDir = (new Random).NextInteger(1, 2) === 1 ? 1 : -1;
@@ -123,7 +136,7 @@ export class FPSController implements OnStart, OnRender {
         
         this.recoil.kick(cforce, "Camera");
         this.recoil.kick(mforce, "Model");
-        task.wait(.1);
+        task.wait(.12);
         this.recoil.kick(cforce.mul(-1), "Camera");
         this.recoil.kick(mforce.mul(-1), "Model");
     }
